@@ -1,0 +1,93 @@
+version: '3.9'
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    container_name: elasticsearch
+    hostname: elasticsearch
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - ${ES_PORT}:9200
+    restart: always
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  # kibana:
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_started
+  #   image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+  #   container_name: kibana
+  #   volumes:
+  #     - kibana-data:/usr/share/kibana/data
+  #   ports:
+  #    - ${KIBANA_PORT}:5601
+  #   restart: always
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS}
+
+  redis:
+    image: redis:6-alpine
+    hostname: redis
+    container_name: redis
+    ports:
+     - 6379:6379
+
+  mongo:
+    image: mongo:latest
+    hostname: mongo
+    container_name: mongo
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+    - 27017:27017
+    volumes:
+    - ./mongo-volume:/data/db
+
+  api:
+    depends_on:
+      elasticsearch:
+        condition: service_started
+    build: .
+    image: api
+    container_name: api
+    hostname: api
+    ports:
+      - 5000:5000
+    command: python app.py
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS}
+      - MONGO_SRV=${MONGO_SRV}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+
+  worker:
+    depends_on:
+      elasticsearch:
+        condition: service_started
+    build: .
+    container_name: worker
+    command: celery --app jobs.precompute_words_count.celery  worker --loglevel=info -E
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS}
+      - MONGO_SRV=${MONGO_SRV}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+
+volumes:
+  elasticsearch-data:
+    driver: local
+  kibana-data:
+    driver: local
+  # mongo-volume:
+  #   driver: local
