@@ -40,7 +40,7 @@ Create an API with the following 3 endpoints:
     ```sh
     docker-compose up
     ```
-- The API endpoints would be accessible on http://localhost:5000 by default. Explore the endpoints using this postman collection hosted here. This collection can be downloaded and imported in the postman app. However, since the app is really straightforward with the just 3 endpoints as mentioned in the beginning, you can simply hit those endpoints to see the results. If any API required parameters, you would clearly know it by looking at the error reponse of the API if you don't provide it.
+- The API endpoints would be accessible on http://localhost:5000 by default. Explore the endpoints using this [postman collection](https://drive.google.com/file/d/12VcrAEyb0Qg93Kcjv0RCpmVNAMstx1YO/view?usp=drive_link). This collection can be downloaded and imported in the postman app. However, since the app is really straightforward with the just 3 endpoints as mentioned in the beginning, you can simply hit those endpoints to see the results. If any API required parameters, you would clearly know it by looking at the error reponse of the API if you don't provide it.
 
 ## Steps to run the backend app outside of docker container:
 
