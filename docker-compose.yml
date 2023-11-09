@@ -76,7 +76,7 @@ services:
         condition: service_started
     build: .
     container_name: worker
-    command: celery --app jobs.precompute_words_count.celery  worker --loglevel=info -E
+    command: celery --app src.jobs.precompute_words_count.celery  worker --loglevel=info -E
     volumes:
       - .:/usr/src/app
     environment:
@@ -89,5 +89,3 @@ volumes:
     driver: local
   kibana-data:
     driver: local
-  # mongo-volume:
-  #   driver: local
