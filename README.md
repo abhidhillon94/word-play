@@ -101,3 +101,4 @@ This app is nowhere close to production ready in the current state and the sole 
 - We use a basic english language analyzer for word stemming in elastic search for demonstration purpose of how we can smartly index subset of data instead of the entire data. While it is better than the standard analyzer, we still need to configure our own anlyzer for production grade use cases.
 - Pagination capability can be added to the /search API to limit the results returned by the API that would help with performance in multiple ways. Pagination requirement has not been mentioned in the requirements though.
 - We haven't set up indexes in MongoDB or supported replication or sharding for this demo. However, the technical choices made here make this job only an incremental effort.
+- Some non critical passwords to speed the process of local environment setup have been checkin to the repo. This was a concious choice to avoid having to share the .env files separately.
