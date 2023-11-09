@@ -1,2 +1,91 @@
-# word-play
-A lightweight flask backend to fetch some text from an external source on web and optimally persist it to perform full text search and return definitions of most used words in texts
+# Word Play
+### An backend that exposes APIs to ingest paragraphs of text from metaphorpsum.com into the system, provide ability to perform full text search on the text in various ways and find the definitions of these words from dictionaryapi.dev.
+
+## Requirements
+
+Create an API with the following 3 endpoints:
+- get/
+    - Fetch a paragraph and store it
+    - No params are needed.
+    - When this endpoint is hit, it should fetch 1 paragraph from http://metaphorpsum.com/ with 50 sentences and store it in a persistent storage layer and return it.
+- search/
+    - search through stored paragraphs
+    - allow providing multiple words and one of the two operators: 'or' or 'and'
+        -“one”, “two”, “three”, with the “or” operator should return any paragraphs that have at least one the words “one”, “two” or “three”
+        -“one”, “two”, “three”, with the “or” operator should return paragraphs that have all the words “one”, “two” or “three”
+- dictionary/
+    - Should return the definition of the top 10 words (frequency) found in the all the paragraphs currently store in the system.
+    - Word definition should retrieved from https://dictionaryapi.dev/
+
+## Technologies used
+- MongoDb for persistant storage.
+- Elasticsearch to index the data that can be searched.
+- Python for the backend. Libraries and dependencies are listed:
+    - Flask to run the HTTP server
+    - Celery to run the background/async jobs worker
+    - Redis as broker for celery and to perform rate limiting on external APIs in a horizontally scalabale environment running multiple instances of the API servers or background/async task wrokers.
+    - python-dotenv to conviniently manage the environment variables across various environments
+    - elasticsearch to integrate with elasticsearch
+    - mongoengine to integrate with MongoDB
+
+## Steps to run the system locally
+- Install docker and docker-compose. Follow the installation instructions [here](https://docs.docker.com/compose/install/) depending on your platform (Linux, Mac, Windows)
+- Make sure that you have git installed.
+- Checkout the github repo on your machine by running the following command:
+    ```sh
+    git clone git@github.com:abhidhillon94/word-play.git
+    ```
+- In the root of the repo, clone env.example to a new file named .env. It contains environment variables that need to be passed to docker-compose to set up mongoDB, elasticsearch and redis. All of these variables point to localhost and standard ports of each service for this setup. You can choose to change the ports binding in case you already have any of the services/tools mentioned here running on your machine.
+- Use docker-compose to set up all of the services required to run this app by running the following command from the root of the repo:
+-   ```sh
+    docker-compose up
+    ```
+- The API endpoints would be accessible on http://localhost:5000 by default. Explore the endpoints using this postman collection hosted here. This collection can be downloaded and imported in the postman app. However, since the app is really straightforward with the just 3 endpoints as mentioned in the beggning, you can simply hit those endpoints to see the results. If any API required parameters, you would clearly know it by looking at the error reponse of the API if you don't provide it.
+
+## Steps to run the codebase outside of docker container:
+- install pipenv to isolate the dependencies in a virtual environment of this repo by running the following command.
+    ```sh
+    pip install pipenv
+    ```
+- Switch to the pipenv shell by running the following command from the root of the repository.
+    ```sh
+    pipenv shell
+    ```
+- Install the dependencies in your virtual environment by running the following command:
+    ```sh
+    pipenv install
+    ```
+- Run the following command to start the API server that serves your APIs:
+    ```sh
+    python app.py
+    ```
+- Run the following command to run the unit test cases. Make sure to run them as you make any changes in order to find out if any code change broke any functionality
+    ```sh
+    python -m unittest discover tests/unit -p '*_test.py'
+    ```
+- If you need to run this along with the other components on which our API server is dependent on, please comment out the api and worker service sections from the docker-compose.yml file on line 55 and 73. You can choose to run kibana by uncommenting the kibana service section that starts on line 21 in docker-compose.yml if you need to inspect data in elastic search using an interctive UI.
+
+## Insights into code structure:
+- The entry point of the code is app.py file in the root directory of the repo.
+- All of the code resides in src directory and split into the following subdirectories:
+    - controllers: It contains files that are starting point for the APIs. We have used flask blueprint to manage and define the routes. This is the layer that contains our input sanitization and validation logic, response formatting logic and calls to our service layer that contains the core business logic.
+    - services: Files in this directory contains the core business logic of our application. It also includes database interaction/queries since our codebase is quite small and we use mongoEngine ODM that makes querying easier eliminating the need to have a repostory layer at this point. We can consider moving the database operations out of this layer into repository layer if the codebase grows or if we feel the need to have reusable database operations/queries.
+    - models: This direectory contains classes/entities that represent the documents in our database. Each model currently also maps to a collection in the database and the classes present in this layer also provide interface to perform database operations on the corresponding collections.
+    - jobs: This directory contains our async/background jobs that are currently being run using celery workers. These jobs are long running tasks that we want to perform in a separate process outside of the API server process to reduce the latency of the APIs.
+    - bootstrap_resources: This directory contains logic to setup any shared resources like MongoDB or Elasticsearch connections and operations that we usually do while bootstraping the application process.
+- Our test cases reside in the tests directory available in the root of the repo. We currently have only unit test cases in the unit subdirectory here. Integration test cases will be added to the integration subdirectory.
+
+## Limitations and scope of improvement:
+This app is nowhere close to production ready in the current state and the sole purpose of this code is to demonstrate knowledge of python, various tools and their usage. In the interest of time, the following features/implementation/improvments have not been done:
+- We currently index the paragraph content in elastic search from our application which is not reliable. The original system design included usage of [mongo-connector](https://pypi.org/project/mongo-connector/) to sync data from MongoDB to elastic search. Due to this, we currently do not have a mechanism to perform initial seeding of the data in elasticsearch if our MongoDB has data that elasticsearch doesn't. If an elastic search index is deleted, the initial sync of data can not be done at the moment.
+- From the security aspect, the system has been set up to optimise for easier local container based deployment. We have disabled the security on elasticsearch to reduce the scope of work.
+- Pagination capability can be added to the /search API to limit the results returned by the API that would help with performance in multiple ways.
+- The external API calls to fetch paragraphs and dictionary would ideally be rate limited. We should have rate limiting in place to deal with it exceeding our rate limits. Redis can be utilised for the same.
+- There are few IO operations like database access and external API calls that can be performed in a non blocking manner by usage of Asyncio or threading.
+- Usage of proper logging to log instead of print statements.
+- Our async tasks processing system is currently being run in it's implest form. We can introduce retry features for back Usage of DLQ or ability to retry failed celery jobs round and to track failed jobs so that we can formulate a plan to retry failed maessges.
+- Usage of a tool like supervisorD to run the celery worker in a reliable manner
+- Observability of the infra and all of the components needs to be added.
+- Our flask server is currently being run only for the purpose of debugging. We need to use a production WSGI server like waitress or gevent.
+- There are no healthchecks for any of the services at the moment. Those need to be added in order to imporve our deployment stability.
+- Integratioion test cases have not been written so far. We only have unit test cases.
