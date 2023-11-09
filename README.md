@@ -35,18 +35,15 @@ Create an API with the following 3 endpoints:
     ```sh
     git clone git@github.com:abhidhillon94/word-play.git
     ```
-- In the root of the repo, clone build.env or env.example to a new file named .env. It contains environment variables that need to be passed to docker-compose to set up mongoDB, elasticsearch and redis. All of these variables point to localhost and standard ports of each service for this setup. You can choose to change the ports binding in case you already have any of the services/tools mentioned here running on your machine.
+- In the root of the repo, clone build.env to a new file named .env. It contains environment variables that need to be passed to docker-compose to set up mongoDB, elasticsearch and redis. All of these variables expose the standard ports of each service for this setup on the host. You can choose to change the ports binding in case you already have any of the services/tools mentioned here running on your machine.
 - Use docker-compose to set up all of the services required to run this app by running the following command from the root of the repo:
     ```sh
     docker-compose up
     ```
-- The API endpoints would be accessible on http://localhost:5000 by default. Explore the endpoints using this postman collection hosted here. This collection can be downloaded and imported in the postman app. However, since the app is really straightforward with the just 3 endpoints as mentioned in the beggning, you can simply hit those endpoints to see the results. If any API required parameters, you would clearly know it by looking at the error reponse of the API if you don't provide it.
+- The API endpoints would be accessible on http://localhost:5000 by default. Explore the endpoints using this postman collection hosted here. This collection can be downloaded and imported in the postman app. However, since the app is really straightforward with the just 3 endpoints as mentioned in the beginning, you can simply hit those endpoints to see the results. If any API required parameters, you would clearly know it by looking at the error reponse of the API if you don't provide it.
 
 ## Steps to run the backend app outside of docker container:
-- While we run web and worker processes out side of docker container, we can still choose to run other components like redis, MongoDB and elasticsearch using docker compose up. To proceed, please comment out the api and worker service sections from the docker-compose.yml file on line 55 and 73. You can choose to run kibana by uncommenting the kibana service section that starts on line 21 in docker-compose.yml if you need to inspect data in elastic search using an interctive UI. Copy the contents of env.example to .env file. All of the hostnames point to the localhost in this file and that's how we need it if we run the api and worker outside of docker network since docker's virtual hostnames (mentioned in build.env) would not be accessible here. After the aforementioned steps, start the services on which our backend app and worker depend using the following command:
-    ```sh
-    docker-compose up
-    ```
+
 - install pipenv to isolate the dependencies in a virtual environment of this repo by running the following command.
     ```sh
     pip install pipenv
@@ -59,17 +56,23 @@ Create an API with the following 3 endpoints:
     ```sh
     pipenv install
     ```
+- Run the following command to run the unit test cases.
+    ```sh
+    python -m unittest discover tests/unit -p '*_test.py'
+    ```
+    Make sure to run them as you make any changes in order to find out if any code change broke any functionality. Please note that you do not need any dependecies like Elasticsearch, MongoDB or redis running on the system in order to run the unit tests since unit tests are completely independent.
+- While we run web and worker processes out side of docker container, we can still choose to run other components like redis, MongoDB and elasticsearch using docker compose up. To proceed, please comment out the api and worker service sections from the docker-compose.yml file on line 55 and 73. You can choose to run kibana by uncommenting the kibana service section that starts on line 21 in docker-compose.yml if you need to inspect data in elastic search using an interctive UI. Copy the contents of env.example to .env file (please note it's not build.env unlike last step). All of the hostnames point to the localhost in this file (instead of virtual hostnames of the services in docker-compose environment) and that's how we need it if we run the api and worker outside of docker network since docker's virtual hostnames (mentioned in build.env) would not be accessible here. After the aforementioned steps, start the services on which our backend app and worker depend using the following command:
+    ```sh
+    docker-compose up
+    ```
 - Run the following command to start the API server that serves your APIs:
     ```sh
     python app.py
     ```
-- Run the following command to start the celery process that serves as background/async task worker:
+- Open a separate terminal tab/window to run the background job worker. Run the following command to start the celery process that serves as background/async task worker:
     ```sh
+    pipenv shell
     celery --app src.jobs.precompute_words_count.celery  worker --loglevel=info --logfile=logs/celery.log -E
-    ```
-- Run the following command to run the unit test cases. Make sure to run them as you make any changes in order to find out if any code change broke any functionality
-    ```sh
-    python -m unittest discover tests/unit -p '*_test.py'
     ```
 
 ## Insights into code structure:
@@ -85,8 +88,8 @@ Create an API with the following 3 endpoints:
 ## Limitations and scope of improvement:
 This app is nowhere close to production ready in the current state and the sole purpose of this code is to demonstrate knowledge of python, various tools and their usage. In the interest of time, the following features/implementation/improvments have not been done:
 - We currently index the paragraph content in elastic search from our application which is not reliable. The original system design included usage of [mongo-connector](https://pypi.org/project/mongo-connector/) to sync data from MongoDB to elastic search. Due to this, we currently do not have a mechanism to perform initial seeding of the data in elasticsearch if our MongoDB has data that elasticsearch doesn't. If an elastic search index is deleted, the initial sync of data can not be done at the moment.
+- Some of the files in the bootstrap_resources directory do not have a function to bootstrap or create a resource. This makes the code run during module imports which makes the order of imports significant and not something that we want. I plan to add functions to initialise resources in each file and make a single function to bootstrap the resources that can be called from the entry points of the API server, async/background worker or test cases.
 - From the security aspect, the system has been set up to optimise for easier local container based deployment. We have disabled the security on elasticsearch to reduce the scope of work.
-
 - The external API calls to fetch paragraphs and dictionary would ideally be rate limited. We should have rate limiting in place to deal with it exceeding our rate limits. Redis can be utilised for the same.
 - There are few IO operations like database access and external API calls that can be performed in a non blocking manner by usage of Asyncio or threading.
 - Usage of app.logger for logging to log instead of print statements. We have very few logs at the moment that are mostly logged during application startup. Hence we choose not to set up the logging config in order to use app.logger.
