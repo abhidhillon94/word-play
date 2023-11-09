@@ -88,4 +88,6 @@ This app is nowhere close to production ready in the current state and the sole 
 - Observability of the infra and all of the components needs to be added.
 - Our flask server is currently being run only for the purpose of debugging. We need to use a production WSGI server like waitress or gevent.
 - There are no healthchecks for any of the services at the moment. Those need to be added in order to imporve our deployment stability.
-- Integratioion test cases have not been written so far. We only have unit test cases.
+- Integration test cases have not been written so far. We only have unit test cases.
+- Our elasticsearch runs as a single node server for demonstration purpose which should ideally run a sa cluster. Same goes for mongoDB as well.
+- We use a basic english language analyzer for word stemming in elastic search for demonstration purpose of how we can index limited data. While it is better than the standard analyzer, we still need to configure our own anlyzer for production grade use cases.
