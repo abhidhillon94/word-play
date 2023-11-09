@@ -46,7 +46,6 @@ def precompute_word_counts_and_definitions(paragraph_content):
     for word in word_counts:
         if not word.definition:
             definition = get_definition(word.word)
-            res = word.update(definition=definition)
-            print(res)
+            word.update(definition=definition)
 
     return True

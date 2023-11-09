@@ -8,6 +8,4 @@ from src.bootstrap_resources.mongodb import initialize_mongodb
 celery = Celery(__name__)
 celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL")
 
-print(os.environ['MONGO_SRV'])
-
 initialize_mongodb(app)

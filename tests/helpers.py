@@ -15,7 +15,6 @@ def are_lists_of_dicts_equal(list1, list2):
             # Remove the matching dictionary from list2_copy
             list2_copy.remove(dict1)
         else:
-            print('not present')
             return False
     
     # If all dictionaries in list1 have been found in list2, the lists are the same

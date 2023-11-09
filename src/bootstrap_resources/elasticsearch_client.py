@@ -19,4 +19,4 @@ index_mappings = {
 try:
     elasticsearch_client.indices.create(index='paragraphs', mappings=index_mappings)
 except:
-    print("Elasticsearch index couldn't be created. Looks like it already exists")
+    print("Elasticsearch index couldn't be created. It's okay for this to not be created if it's created before")
