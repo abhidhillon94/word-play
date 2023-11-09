@@ -104,4 +104,10 @@ This app is nowhere close to production ready in the current state and the sole 
 - We use a basic english language analyzer for word stemming in elastic search for demonstration purpose of how we can smartly index subset of data instead of the entire data. While it is better than the standard analyzer, we still need to configure our own anlyzer for production grade use cases.
 - Pagination capability can be added to the /search API to limit the results returned by the API that would help with performance in multiple ways. Pagination requirement has not been mentioned in the requirements though.
 - We haven't set up indexes in MongoDB or supported replication or sharding for this demo. However, the technical choices made here make this job only an incremental effort.
-- Some non critical passwords to speed the process of local environment setup have been checkin to the repo. This was a concious choice to avoid having to share the .env files separately.
+- Some non critical passwords to speed up the process of local environment setup have been checkin to the repo in .env files. This was a concious choice to avoid having to share the .env files separately for this specific instance.
+
+
+## Assumptions:
+- The problem statement states that the /dictionary API should return the definition of the top 10 words by frequency. We have assumed that the frequency is computed by considering the occurances of the words only once in a single paragraph. For example, if a word appears 2 time in paragraph 1 and 5 times in paragraph 2, the total occurance assumed would be 2. This is done to avoid getting common filler words in the top words.
+- We have assumed that variations of a single word in singular/plural format or with change in tenses shoudln't be considered as separate words. We reduce words to their root form for frequency calculation. We are currently using the english language analyzer in elasticsearch to reduce the word but we can choose to extend it with custom dictionaries of stop words and filler words and algorithms related to word reduction for real production usage.
+- We have assumed that it's fine for the dictionary API to return eventul consistent data or the words frequency compution to not be realtime. However, it is near realtime.
