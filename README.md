@@ -93,18 +93,19 @@ This app is nowhere close to production ready in the current state and the sole 
 - The external API calls to fetch paragraphs and dictionary would ideally be rate limited. We should have rate limiting in place to deal with it exceeding our rate limits. Redis can be utilised for the same.
 - There are few IO operations like database access and external API calls that can be performed in a non blocking manner by usage of Asyncio or threading.
 - Usage of app.logger for logging to log instead of print statements. We have very few logs at the moment that are mostly logged during application startup. Hence we choose not to set up the logging config in order to use app.logger.
-- Our async tasks processing system is currently being run in it's implest form. We have not configured retry in it. Usage of DLQ or ability to retry failed celery jobs round and to track failed jobs so that we can formulate a plan to retry failed maessges needs to be added.
+- Our async tasks processing system is currently being run in it's implest form. We have not configured retry in it. Usage of DLQ or ability to retry failed celery jobs and to track failed jobs so that we can formulate a plan to retry failed maessges needs to be added.
 - The celery worker currently uses redis broker for demonstration purpose. This is not an ideal choice for high traffic and redis needs to be configrued with AOF backups in order to make the messages persistent/durble across crashes or restarts. However, we can easily switch to any other broker with minimal changes in the code but we do not want to set up the infra right now in order to prevent application from being too heay by running too many containers. Redis is an optimal choice for now since it has multiple usages in the app in near future like rate limiting.
-- Usage of a tool like supervisorD to run the celery worker in a reliable manner.
+- Usage of a tool like supervisor to run the celery worker in a reliable manner.
 - Observability of the infra and all of the components needs to be added.
 - Our flask server is currently being run only for the purpose of debugging. We need to use a production WSGI server like waitress or gevent.
 - There are no healthchecks for any of the services at the moment for demo purpose. Those need to be added in order to imporve our deployment stability.
 - Integration test cases have not been written so far. We only have unit test cases. The reasoning here is to display ability to write good unit test cases as that's harder than integration test cases considering requirement to mocking lot more functions/modules unlike integration testing where you only need to mock the external dependencies like DBs and external API calls.
 - Our elasticsearch runs as a single node server for demonstration purpose which should ideally run a as a multi node cluster to reap all of the benefits. Same goes for mongoDB as well.
-- We use a basic english language analyzer for word stemming in elastic search for demonstration purpose of how we can smartly index subset of data instead of the entire data. While it is better than the standard analyzer, we still need to configure our own anlyzer for production grade use cases.
+- We use the built-in english language analyzer for word stemming in elastic search for demonstration purpose of how we can smartly index subset of data instead of the entire data. While it is better than the standard analyzer, we still need to configure our own anlyzer for production grade use cases.
 - Pagination capability can be added to the /search API to limit the results returned by the API that would help with performance in multiple ways. Pagination requirement has not been mentioned in the requirements though.
 - We haven't set up indexes in MongoDB or supported replication or sharding for this demo. However, the technical choices made here make this job only an incremental effort.
 - Some non critical passwords to speed up the process of local environment setup have been checkin to the repo in .env files. This was a concious choice to avoid having to share the .env files separately for this specific instance.
+- The docker image being used to serve the flask app can be optimised and be smaller in size.
 
 
 ## Assumptions:
